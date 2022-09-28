@@ -8,6 +8,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.function.Supplier;
+
 @Service
 @AllArgsConstructor
 public class DbUserDetailsService implements UserDetailsService {
@@ -16,7 +18,11 @@ public class DbUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        var sysUser = systemUserRepository.findById(username).orElseThrow();
+        var sysUser = systemUserRepository
+                .findById(username)
+                .orElseThrow(
+                        () -> new UsernameNotFoundException("user doesn't exist in database.")
+                );
 
         var userDetails = User
                 .withUsername(sysUser.getUsername())
