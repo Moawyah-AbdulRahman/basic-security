@@ -5,13 +5,8 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collector;
 
 @Component
 @AllArgsConstructor
@@ -22,12 +17,14 @@ public class AuthProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication auth) {
         String username = auth.getName();
-        String password = auth.getCredentials().toString();
+        String rawPassword = auth.getCredentials().toString();
 
         var userDetails = userDetailsService.loadUserByUsername(username);
 
-        if (userDetails.getUsername().equals(username) && userDetails.getPassword().equals(password)) {
-            return new UsernamePasswordAuthenticationToken(username, password, userDetails.getAuthorities());
+        var encodedPassword = userDetails.getPassword();
+
+        if (userDetails.getUsername().equals(username) && passwordEncoder.matches(rawPassword, encodedPassword) ) {
+            return new UsernamePasswordAuthenticationToken(username, rawPassword, userDetails.getAuthorities());
         }
 
         throw new BadCredentialsException("External system authentication failed");
