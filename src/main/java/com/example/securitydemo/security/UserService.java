@@ -1,20 +1,22 @@
 package com.example.securitydemo.security;
 
+import com.example.securitydemo.models.SystemUser;
 import com.example.securitydemo.repositories.SystemUserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.function.Supplier;
 
 @Service
 @AllArgsConstructor
-public class DbUserDetailsService implements UserDetailsService {
+public class UserService implements UserDetailsService {
 
     private final SystemUserRepository systemUserRepository;
+
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -28,10 +30,19 @@ public class DbUserDetailsService implements UserDetailsService {
                 .withUsername(sysUser.getUsername())
                 .password(sysUser.getPassword())
                 .authorities(sysUser.getRoles().stream()
-                        .map(r->r.getName())
+                        .map(r -> r.getName())
                         .toArray(String[]::new)
                 )
                 .build();
         return userDetails;
+    }
+
+    public void createSystemUser(SystemUser systemUser) {
+        systemUser.setPassword(passwordEncoder.encode(systemUser.getPassword()));
+        systemUserRepository.save(systemUser);
+    }
+
+    public boolean userExists(String username) {
+        return systemUserRepository.existsById(username);
     }
 }
